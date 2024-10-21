@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Results</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Exam Results</h1>
+        <div id="resultContainer">
+            <p>Student Score: <span id="studentScore"></span></p>
+        </div>
+        <button onclick="location.href='index.html'">Back to Home</button>
+    </div>
+
+    <script>
+        window.onload = function () {
+            // Get the student score from localStorage
+            const studentScore = localStorage.getItem('studentScore');
+            if (studentScore !== null) {
+                document.getElementById('studentScore').textContent = studentScore;
+            } else {
+                document.getElementById('resultContainer').textContent = 'No exam results available yet.';
+            }
+        };
+    </script>
+</body>
+</html>

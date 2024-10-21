@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proctored Exam Tool</title>
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #e0f7fa; /* Light blue background */
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            background-color: #e0f7fa;
+        }
+
+        h1 {
+            font-size: 2.5em; /* Increase the size of the title */
+            color: #00796b; /* Slightly darker teal for the title */
+            margin-bottom: 20px;
+        }
+
+        #examContainer {
+            background-color: #ffffff; /* White background for the exam section */
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        #timer {
+            font-size: 1.2em;
+            margin-bottom: 15px;
+        }
+
+        label {
+            font-size: 1.1em;
+        }
+
+        button {
+            background-color: #00796b; /* Teal button */
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1em;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background-color: #004d40;
+        }
+
+        #startButton {
+            font-size: 1.3em;
+            padding: 15px 30px;
+        }
+
+        #finalScore {
+            font-size: 1.5em;
+            color: #00796b;
+        }
+
+        #violationMessage {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 0, 0, 0.8);
+            padding: 20px;
+            color: white;
+            font-size: 1.5em;
+            text-align: center;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to Online Exam Platform</h1>
+        <div id="examContainer" style="display: none;">
+            <div id="timer">Time Left: <span id="timeLeft">15</span> seconds</div>
+            <div id="questionText"></div>
+            <div>
+                <input type="radio" name="options" id="optionA" value="A"><label id="labelA"></label><br>
+                <input type="radio" name="options" id="optionB" value="B"><label id="labelB"></label><br>
+                <input type="radio" name="options" id="optionC" value="C"><label id="labelC"></label><br>
+                <input type="radio" name="options" id="optionD" value="D"><label id="labelD"></label><br>
+            </div>
+            <button onclick="nextQuestion()">Next</button>
+        </div>
+        <button id="startButton" onclick="startExam()">Start Exam</button>
+        <p id="finalScore" style="display: none;"></p>
+    </div>
+
+    <!-- Violation message -->
+    <div id="violationMessage">You have tried to switch tabs. The exam is now over!</div>
+
+    <script>
+        let questions = [];
+        let currentQuestionIndex = 0;
+        let timer;
+        let timeLeft = 15;  // Set to 15 seconds per question
+        let score = 0;
+        let escPressed = false;
+
+        window.onload = function() {
+            // Load exam questions from localStorage
+            const savedQuestions = localStorage.getItem('examQuestions');
+            if (savedQuestions) {
+                questions = JSON.parse(savedQuestions);
+            } else {
+                alert("No questions available! Please contact your examiner.");
+            }
+
+            // Disable right-click entirely
+            document.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+            });
+
+            // Disable function keys and prevent actions that might interfere with the exam
+            document.addEventListener('keydown', function(e) {
+                const blockedKeys = ['F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12'];
+                if (blockedKeys.includes(e.key) || (e.ctrlKey && (e.key === 'c' || e.key === 'v' || e.key === 'x'))) {
+                    e.preventDefault();
+                }
+
+                // If ESC is pressed, trigger the violation and exit full screen
+                if (e.key === 'Escape' && !escPressed) {
+                    escPressed = true;
+                    endExamWithViolation();
+                }
+            });
+        }
+
+        function startExam() {
+            enterFullScreen();
+            document.getElementById('startButton').style.display = 'none';
+            document.getElementById('examContainer').style.display = 'block';
+            loadQuestion();
+            startTimer();
+            preventTabSwitching();
+        }
+
+        function loadQuestion() {
+            if (currentQuestionIndex < questions.length) {
+                const currentQuestion = questions[currentQuestionIndex];
+                document.getElementById('questionText').textContent = currentQuestion.question;
+                document.getElementById('labelA').textContent = currentQuestion.options.A;
+                document.getElementById('labelB').textContent = currentQuestion.options.B;
+                document.getElementById('labelC').textContent = currentQuestion.options.C;
+                document.getElementById('labelD').textContent = currentQuestion.options.D;
+            } else {
+                endExam();
+            }
+        }
+
+        function startTimer() {
+            timeLeft = 15;  // Timer set to 15 seconds
+            timer = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timeLeft').textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    nextQuestion();
+                }
+            }, 1000);
+        }
+
+        function nextQuestion() {
+            clearInterval(timer);
+            updateScore();
+            currentQuestionIndex++;
+            if (currentQuestionIndex < questions.length) {
+                loadQuestion();
+                startTimer();
+            } else {
+                endExam();
+            }
+        }
+
+        function updateScore() {
+            const selectedOption = document.querySelector('input[name="options"]:checked');
+            if (selectedOption && selectedOption.value === questions[currentQuestionIndex].correctAnswer) {
+                score++;
+            }
+            document.querySelector('input[name="options"]:checked').checked = false; // Uncheck radio button for next question
+        }
+
+        function endExam() {
+            clearInterval(timer);
+            document.getElementById('examContainer').style.display = 'none';
+            document.getElementById('finalScore').style.display = 'block';
+            document.getElementById('finalScore').textContent = 'Thank you! Your final score is: ' + score + '/' + questions.length;
+
+            // Save student score for the examiner
+            localStorage.setItem('studentScore', score);
+            exitFullScreen();  // Allow full-screen exit after the exam ends
+        }
+
+        function endExamWithViolation() {
+            clearInterval(timer);
+            document.getElementById('examContainer').style.display = 'none';
+            document.getElementById('finalScore').style.display = 'block';
+            document.getElementById('finalScore').textContent = 'You have tried to switch tabs. The exam is now over!';
+
+            // Save student score for the examiner
+            localStorage.setItem('studentScore', score);
+
+            // Exit full-screen immediately after the exam ends
+            exitFullScreen();
+        }
+
+        // Enter Full-Screen Mode
+        function enterFullScreen() {
+            const element = document.documentElement;
+            if (element.requestFullscreen) {
+                element.requestFullscreen();
+            } else if (element.mozRequestFullScreen) { // Firefox
+                element.mozRequestFullScreen();
+            } else if (element.webkitRequestFullscreen) { // Chrome, Safari, Opera
+                element.webkitRequestFullscreen();
+            } else if (element.msRequestFullscreen) { // IE/Edge
+                element.msRequestFullscreen();
+            }
+        }
+
+        // Exit Full-Screen Mode
+        function exitFullScreen() {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.mozCancelFullScreen) { // Firefox
+                document.mozCancelFullScreen();
+            } else if (document.webkitExitFullscreen) { // Chrome, Safari, Opera
+                document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) { // IE/Edge
+                document.msExitFullscreen();
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Examiner Login</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Examiner Login</h1>
+        <form id="loginForm" onsubmit="return login()">
+            <input type="text" id="username" placeholder="Username" required>
+            <input type="password" id="password" placeholder="Password" required>
+            <button type="submit">Login</button>
+            <p id="loginError" style="color: red;"></p>
+        </form>
+    </div>
+
+    <script>
+        function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            // Hardcoded credentials for the examiner
+            if (username === 'examiner' && password === 'password123') {
+                // Redirect to the add_questions.html page
+                window.location.href = 'add_questions.html';  // Ensure the file path is correct
+            } else {
+                document.getElementById('loginError').textContent = 'Invalid username or password.';
+                return false;  // Prevent form submission
+            }
+
+            return false;  // Ensure the form does not submit traditionally
+        }
+    </script>
+</body>
+</html>

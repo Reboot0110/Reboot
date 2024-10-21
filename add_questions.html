@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Questions</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Add Questions</h1>
+        <form id="questionForm" onsubmit="return saveQuestions()">
+            <div id="questionsContainer">
+                <div class="questionBlock">
+                    <input type="text" placeholder="Question" required class="question">
+                    <input type="text" placeholder="Option A" required class="optionA">
+                    <input type="text" placeholder="Option B" required class="optionB">
+                    <input type="text" placeholder="Option C" required class="optionC">
+                    <input type="text" placeholder="Option D" required class="optionD">
+                    <input type="text" placeholder="Correct Answer (A/B/C/D)" required class="correctAnswer">
+                </div>
+            </div>
+            <button type="button" onclick="addQuestion()">Add More Questions</button>
+            <button type="submit">Save Questions</button>
+        </form>
+        <p id="successMessage" style="color: green;"></p>
+        <button onclick="location.href='index.html'">Back to Home</button>
+    </div>
+
+    <script>
+        let questions = [];
+
+        function addQuestion() {
+            const questionBlock = document.createElement('div');
+            questionBlock.classList.add('questionBlock');
+            questionBlock.innerHTML = `
+                <input type="text" placeholder="Question" required class="question">
+                <input type="text" placeholder="Option A" required class="optionA">
+                <input type="text" placeholder="Option B" required class="optionB">
+                <input type="text" placeholder="Option C" required class="optionC">
+                <input type="text" placeholder="Option D" required class="optionD">
+                <input type="text" placeholder="Correct Answer (A/B/C/D)" required class="correctAnswer">
+            `;
+            document.getElementById('questionsContainer').appendChild(questionBlock);
+        }
+
+        function saveQuestions() {
+            questions = []; // Clear previous questions
+
+            const questionBlocks = document.querySelectorAll('.questionBlock');
+            questionBlocks.forEach(block => {
+                const questionText = block.querySelector('.question').value;
+                const optionA = block.querySelector('.optionA').value;
+                const optionB = block.querySelector('.optionB').value;
+                const optionC = block.querySelector('.optionC').value;
+                const optionD = block.querySelector('.optionD').value;
+                const correctAnswer = block.querySelector('.correctAnswer').value;
+
+                questions.push({
+                    question: questionText,
+                    options: { A: optionA, B: optionB, C: optionC, D: optionD },
+                    correctAnswer: correctAnswer
+                });
+            });
+
+            localStorage.setItem('examQuestions', JSON.stringify(questions));
+            document.getElementById('successMessage').textContent = 'Questions saved successfully!';
+            return false;
+        }
+    </script>
+</body>
+</html>
